@@ -12,9 +12,9 @@ class TaskController extends Controller
      * Display a listing of the resource.
      * GET /api/tasks
      */
-    public function index()
+    public function index(Request $request)
     {
-        return Task::all();
+        return Task::where('user_id', $request->user()->id)->get();
     }
 
     /**
@@ -29,6 +29,7 @@ class TaskController extends Controller
             'status' => 'required|in:pending,in_progress,completed',
         ]);
 
+        $validated['user_id'] = $request->user()->id;
         $task = Task::create($validated);
         return response()->json($task, 201);
     }
@@ -55,6 +56,10 @@ class TaskController extends Controller
         ]);
 
         $task = Task::findOrFail($id);
+        // Ensure the task belongs to the authenticated user
+        if ($task->user_id !== $request->user()->id) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
         $task->update($request->all());
 
         return response()->json($task, 200);
@@ -64,9 +69,13 @@ class TaskController extends Controller
      * Remove the specified resource from storage.
      * DELETE /api/tasks/{id}
      */
-    public function destroy(string $id)
+    public function destroy(Request $request, string $id)
     {
         $task = Task::findOrFail($id);
+        // Ensure the task belongs to the authenticated user
+        if ($task->user_id !== $request->user()->id) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
         $task->delete();
 
         return response()->json(['message' => 'Task deleted successfully'], 204);
