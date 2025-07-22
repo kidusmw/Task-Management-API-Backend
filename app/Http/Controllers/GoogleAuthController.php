@@ -54,6 +54,7 @@ class GoogleAuthController extends Controller
         $token = $userToLogin->createToken('auth_token')->plainTextToken;
 
         // Pass user details and token to frontend
-        return redirect('http://127.0.0.1:5173/?token=' . $token . '&name=' . urlencode($userToLogin->name) . '&email=' . urlencode($userToLogin->email));
+        $frontendUrl = env('FRONTEND_URL', 'http://127.0.0.1:5173'); // Use environment variable
+        return redirect($frontendUrl . '/?token=' . $token . '&name=' . urlencode($userToLogin->name) . '&email=' . urlencode($userToLogin->email));
     }
 }
