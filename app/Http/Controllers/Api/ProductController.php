@@ -26,7 +26,7 @@ class ProductController extends Controller
             'description' => 'nullable|string',
             'price' => 'required|numeric|min:0',
             'discountPrice' => 'nullable|numeric|min:0',
-            'status' => 'required|string|in:available,out_of_stock,draft',
+            'status' => 'required|string|in:available,out_of_stock,discontinued',
             'images' => 'nullable|array',
         ]);
 
@@ -53,7 +53,7 @@ class ProductController extends Controller
             'description' => 'nullable|string',
             'price' => 'required|numeric|min:0',
             'discountPrice' => 'nullable|numeric|min:0',
-            'status' => 'required|string|in:available,out_of_stock,draft',
+            'status' => 'required|string|in:available,out_of_stock,discontinued',
             'images' => 'nullable|array',
         ]);
 
