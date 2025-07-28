@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Product;
+use Illuminate\Support\Facades\Storage;
 
 class ProductController extends Controller
 {
@@ -13,7 +14,19 @@ class ProductController extends Controller
      */
     public function index(Request $request)
     {
-        return Product::where('user_id', $request->user()->id)->get();
+        $products = Product::where('user_id', $request->user()->id)->get();
+
+        // Transform each product's images to full URLs
+        $products->transform(function ($product) {
+            if (is_array($product->images)) {
+                $product->images = array_map(function ($path) {
+                    return Storage::url($path);  // e.g. /storage/products/filename.jpg
+                }, $product->images);
+            }
+            return $product;
+        });
+
+        return $products;
     }
 
     /**
@@ -27,11 +40,24 @@ class ProductController extends Controller
             'price' => 'required|numeric|min:0',
             'discountPrice' => 'nullable|numeric|min:0',
             'status' => 'required|string|in:available,out_of_stock,discontinued',
-            'images' => 'nullable|array',
+            'images' => 'nullable',
+            'images.*' => 'image|max:2048',  // validate each uploaded file as image max 2MB
         ]);
 
         $validated['user_id'] = $request->user()->id;
         $product = Product::create($validated);
+
+        // Handle image uploads if any
+        if ($request->hasFile('images')) {
+            $imagePaths = [];
+            foreach ($request->file('images') as $image) {
+                $path = $image->store('products', 'public');
+                $imagePaths[] = $path;
+            }
+            $product->images = $imagePaths;
+            $product->save();
+        }
+
         return response()->json($product, 201);
     }
 
@@ -40,7 +66,16 @@ class ProductController extends Controller
      */
     public function show(string $id)
     {
-        return Product::findOrFail($id);
+        $products = Product::findOrFail($id);
+
+        $products->transform(function ($product) {
+            if (is_array($product->images)) {
+                $product->images = array_map(fn($path) => Storage::url($path), $product->images);
+            }
+            return $product;
+        });
+
+        return response()->json($products);
     }
 
     /**
@@ -54,7 +89,8 @@ class ProductController extends Controller
             'price' => 'required|numeric|min:0',
             'discountPrice' => 'nullable|numeric|min:0',
             'status' => 'required|string|in:available,out_of_stock,discontinued',
-            'images' => 'nullable|array',
+            'images' => 'nullable',
+            'images.*' => 'image|max:2048',
         ]);
 
         $product = Product::findOrFail($id);
@@ -63,6 +99,18 @@ class ProductController extends Controller
         }
 
         $product->update($validated);
+
+        // Handle image uploads if any
+        if ($request->hasFile('images')) {
+            $imagePaths = [];
+            foreach ($request->file('images') as $image) {
+                $path = $image->store('products', 'public');
+                $imagePaths[] = $path;
+            }
+            $product->images = $imagePaths;
+            $product->save();
+        }
+
         return response()->json($product);
     }
 
