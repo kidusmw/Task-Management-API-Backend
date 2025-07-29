@@ -18,6 +18,10 @@ Route::middleware('auth:sanctum')->group(function () {
     
     Route::post('/cart/add', [CartController::class, 'add']);
     Route::get('/cart', [CartController::class, 'index']);
+    Route::put('/cart/update/{cartItemId}', [CartController::class, 'update']);
+    Route::delete('/cart/remove/{cartItemId}', [CartController::class, 'remove']);
+    Route::delete('/cart/clear', [CartController::class, 'clear']);
+    Route::get('/cart/summary', [CartController::class, 'getCartSummary']);
 });
 
 Route::post('register', [UserController::class, 'register']);
